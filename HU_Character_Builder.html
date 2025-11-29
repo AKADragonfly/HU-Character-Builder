@@ -1,0 +1,2450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heroes Unbound Character Generator</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        
+        h1 {
+            color: #2563eb;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .validation-warning {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #92400e;
+            font-weight: 500;
+        }
+        
+        .validation-success {
+            background: #d1fae5;
+            border: 2px solid #10b981;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #065f46;
+            font-weight: 500;
+        }
+        
+        .section {
+            margin-bottom: 20px;
+            padding: 12px;
+            background: #f9fafb;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .section-title {
+            color: #2563eb;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #2563eb;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .basic-info-layout {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 20px;
+            align-items: start;
+        }
+        
+        .basic-info-fields {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        
+        .portrait-section {
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .portrait-section:hover .upload-overlay {
+            opacity: 1;
+        }
+        
+        .upload-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(37, 99, 235, 0.9);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.2s;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .horizontal-field {
+            display: grid;
+            grid-template-columns: 130px 1fr;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .inline-item {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        
+        .inline-item:hover {
+            background: #f1f3f5;
+        }
+        
+        .inline-item-container {
+            margin-bottom: 15px;
+        }
+        
+        .inline-item input[type="text"] {
+            flex: 1;
+        }
+        
+        .inline-item input[type="text"]:first-child {
+            flex: 2;
+        }
+        
+        .inline-item input[type="text"].rating-input {
+            width: 80px;
+            flex: none;
+        }
+        
+        .inline-item-desc {
+            margin-left: 20px;
+            margin-top: 5px;
+            margin-bottom: 0;
+        }
+        
+        .inline-item-desc textarea {
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            padding: 8px;
+        }
+        
+        .power-item-wrapper .inline-item {
+            background: #dbeafe;
+            border: 1px solid #93c5fd;
+        }
+        
+        .power-item-wrapper .inline-item:hover {
+            background: #bfdbfe;
+        }
+        
+        .specialization-item-wrapper .inline-item {
+            background: #dcfce7;
+            border: 1px solid #86efac;
+        }
+        
+        .specialization-item-wrapper .inline-item:hover {
+            background: #bbf7d0;
+        }
+        
+        .situation-item-wrapper .inline-item {
+            background: #fef3c7;
+            border: 1px solid #fde68a;
+        }
+        
+        .situation-item-wrapper .inline-item:hover {
+            background: #fde047;
+        }
+        
+        .section-header-with-add {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .section-header-with-add h2 {
+            margin: 0;
+        }
+        
+        .add-btn-inline {
+            background: #2563eb;
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .add-btn-inline:hover {
+            background: #1d4ed8;
+            transform: scale(1.1);
+        }
+        
+        .btn-delete-inline {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        
+        .btn-delete-inline:hover {
+            background: #b91c1c;
+        }
+        
+        .reorder-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            margin-right: 5px;
+        }
+        
+        .btn-reorder {
+            background: #6b7280;
+            color: white;
+            border: none;
+            width: 24px;
+            height: 20px;
+            border-radius: 3px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+        
+        .btn-reorder:hover {
+            background: #4b5563;
+        }
+        
+        .btn-reorder:disabled {
+            background: #d1d5db;
+            cursor: not-allowed;
+        }
+        
+        .input-with-label {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        
+        .input-with-label.name-field {
+            flex: 2;
+        }
+        
+        .input-label-small {
+            font-size: 10px;
+            color: #6b7280;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #374151;
+            font-size: 14px;
+        }
+        
+        input[type="text"],
+        input[type="number"],
+        textarea {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        
+        .portrait-upload {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .portrait-preview {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 3px solid #2563eb;
+            background: #dbeafe;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .portrait-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .portrait-placeholder {
+            color: #9ca3af;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        .file-input-label {
+            background: #2563eb;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .file-input-label:hover {
+            background: #1d4ed8;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .attribute-row {
+            display: grid;
+            grid-template-columns: 120px 70px 1fr;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .attribute-label {
+            font-weight: 600;
+            font-style: italic;
+            color: #1f2937;
+            font-size: 13px;
+        }
+        
+        .total-display {
+            background: white;
+            border: 2px solid #2563eb;
+            border-radius: 4px;
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 16px;
+            color: #2563eb;
+        }
+        
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .item-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 15px;
+        }
+        
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .item-name {
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .item-value {
+            background: #2563eb;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .item-description {
+            color: #6b7280;
+            font-size: 14px;
+            font-style: italic;
+        }
+        
+        .item-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+        
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+        }
+        
+        .add-item-btn {
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .export-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e5e7eb;
+        }
+        
+        .export-buttons button,
+        .export-buttons label {
+            flex: 1;
+            padding: 15px;
+            font-size: 16px;
+        }
+        
+        /* Character Sheet Print Styles */
+        .character-sheet {
+            width: 8.5in;
+            height: 11in;
+            background: white;
+            padding: 0.5in;
+            margin: 0 auto;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .sheet-header {
+            display: grid;
+            grid-template-columns: 0.9fr auto 0.9fr;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: start;
+        }
+        
+        .sheet-name-box {
+            border: 2px solid black;
+            border-radius: 8px;
+            padding: 15px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .sheet-hero-name {
+            color: #dc2626;
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .sheet-field-label {
+            font-style: italic;
+            font-weight: 600;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+        
+        .sheet-field-value {
+            font-size: 12px;
+        }
+        
+        .sheet-portrait {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            border: 4px solid #2563eb;
+            background: #dbeafe;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .sheet-portrait img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .sheet-right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            height: 100%;
+        }
+        
+        .sheet-info-box {
+            border: 2px solid #2563eb;
+            border-radius: 8px;
+            padding: 12px;
+            background: #2563eb;
+        }
+        
+        .sheet-info-title {
+            color: white;
+            font-style: italic;
+            font-weight: bold;
+            font-size: 16px;
+            text-align: center;
+        }
+        
+        .sheet-dice-box {
+            border: 2px solid black;
+            border-radius: 8px;
+            padding: 12px;
+            background: white;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .sheet-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+        
+        .sheet-info-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .sheet-section {
+            border: 2px solid black;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .sheet-section-title {
+            color: #2563eb;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .sheet-two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .sheet-attribute-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .sheet-attribute-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .sheet-attribute-name {
+            font-style: italic;
+            font-weight: 600;
+        }
+        
+        .sheet-attribute-value {
+            background: #f3f4f6;
+            padding: 4px 12px;
+            border-radius: 4px;
+            border: 1px solid #d1d5db;
+            font-weight: 600;
+        }
+        
+        .sheet-item {
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .sheet-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .sheet-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        
+        .sheet-item-name {
+            font-weight: 600;
+            color: #2563eb;
+        }
+        
+        .sheet-item-desc {
+            font-size: 11px;
+            color: #6b7280;
+            font-style: italic;
+        }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                padding: 0;
+            }
+            .export-buttons,
+            .section:not(.character-sheet) {
+                display: none !important;
+            }
+        }
+        
+        @page {
+            size: letter;
+            margin: 0.5in;
+        }
+        
+        /* Character Switcher Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+        }
+        
+        .modal-close:hover {
+            background: #f3f4f6;
+            color: #1f2937;
+        }
+        
+        .search-box {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .search-box:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+        
+        .character-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .character-list-item {
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+        
+        .character-list-item:hover {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+        
+        .character-list-item.active {
+            border-color: #2563eb;
+            background: #dbeafe;
+        }
+        
+        .character-name {
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .character-info {
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        .delete-character-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .delete-character-btn:hover {
+            background: #dc2626;
+        }
+        
+        .current-character-bar {
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .current-character-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .current-character-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .current-character-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        
+        .auto-save-indicator {
+            font-size: 12px;
+            color: #10b981;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .character-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6b7280;
+        }
+        
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        
+        .character-count {
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+        
+        .load-more-btn {
+            width: 100%;
+            padding: 12px;
+            background: #f3f4f6;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            color: #1f2937;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: all 0.2s;
+        }
+        
+        .load-more-btn:hover {
+            background: #e5e7eb;
+            border-color: #d1d5db;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        function HeroesUnboundGenerator() {
+            // Character management state
+            const [currentCharacterId, setCurrentCharacterId] = useState(null);
+            const [characterList, setCharacterList] = useState({});
+            const [showCharacterSwitcher, setShowCharacterSwitcher] = useState(false);
+            const [searchTerm, setSearchTerm] = useState('');
+            const [lastSaved, setLastSaved] = useState(null);
+            const [visibleCount, setVisibleCount] = useState(20);
+            
+            // Character state
+            const [character, setCharacter] = useState({
+                heroName: '',
+                realName: '',
+                occupation: '',
+                teamTitle: '',
+                baseOfOperations: '',
+                issueNo: '',
+                portrait: null,
+                usedAdvancement: '0D',
+                unusedAdvancement: '0D',
+                
+                // Anchoring Statements
+                anchoringStatements: ['', ''],
+                
+                // Aptitudes (start at 2D base)
+                might: '2D',
+                mightNotes: '',
+                dexterity: '2D',
+                dexterityNotes: '',
+                intellect: '2D',
+                intellectNotes: '',
+                presence: '2D',
+                presenceNotes: '',
+                
+                // Resistances (start at 2D base)
+                fortitude: '2D',
+                fortitudeNotes: '',
+                reaction: '2D',
+                reactionNotes: '',
+                mind: '2D',
+                mindNotes: '',
+                composure: '2D',
+                composureNotes: '',
+                
+                // Specializations
+                specializations: [],
+                
+                // Powers
+                powers: [],
+                
+                // Situations
+                situations: []
+            });
+
+            const fileInputRef = useRef(null);
+            
+            // LocalStorage key
+            const STORAGE_KEY = 'heroesUnbound_characters';
+            
+            // Load characters from localStorage on mount
+            useEffect(() => {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    try {
+                        const parsed = JSON.parse(stored);
+                        setCharacterList(parsed);
+                        
+                        // Load the first character if exists
+                        const ids = Object.keys(parsed);
+                        if (ids.length > 0) {
+                            setCurrentCharacterId(ids[0]);
+                            setCharacter(parsed[ids[0]]);
+                        }
+                    } catch (e) {
+                        console.error('Failed to load characters:', e);
+                    }
+                }
+            }, []);
+            
+            // Save current character to localStorage whenever it changes
+            useEffect(() => {
+                if (currentCharacterId && character.heroName) {
+                    const newList = {
+                        ...characterList,
+                        [currentCharacterId]: character
+                    };
+                    setCharacterList(newList);
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(newList));
+                    setLastSaved(new Date());
+                }
+            }, [character, currentCharacterId]);
+            
+            // Update "saved X seconds ago" display every second
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    if (lastSaved) {
+                        setLastSaved(new Date(lastSaved));
+                    }
+                }, 1000);
+                return () => clearInterval(interval);
+            }, [lastSaved]);
+            
+            // Generate unique ID for character
+            const generateId = (name) => {
+                const base = name.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'character';
+                let id = base;
+                let counter = 1;
+                while (characterList[id]) {
+                    id = `${base}-${counter}`;
+                    counter++;
+                }
+                return id;
+            };
+            
+            // Create new character
+            const createNewCharacter = () => {
+                const newId = generateId('new-character');
+                const newChar = {
+                    heroName: '',
+                    realName: '',
+                    occupation: '',
+                    teamTitle: '',
+                    baseOfOperations: '',
+                    issueNo: '',
+                    portrait: null,
+                    usedAdvancement: '0D',
+                    unusedAdvancement: '0D',
+                    anchoringStatements: ['', ''],
+                    might: '2D',
+                    mightNotes: '',
+                    dexterity: '2D',
+                    dexterityNotes: '',
+                    intellect: '2D',
+                    intellectNotes: '',
+                    presence: '2D',
+                    presenceNotes: '',
+                    fortitude: '2D',
+                    fortitudeNotes: '',
+                    reaction: '2D',
+                    reactionNotes: '',
+                    mind: '2D',
+                    mindNotes: '',
+                    composure: '2D',
+                    composureNotes: '',
+                    specializations: [],
+                    powers: [],
+                    situations: []
+                };
+                
+                setCurrentCharacterId(newId);
+                setCharacter(newChar);
+            };
+            
+            // Switch to different character
+            const switchToCharacter = (id) => {
+                if (characterList[id]) {
+                    setCurrentCharacterId(id);
+                    setCharacter(characterList[id]);
+                    setShowCharacterSwitcher(false);
+                }
+            };
+            
+            // Delete character
+            const deleteCharacter = (id) => {
+                if (window.confirm('Are you sure you want to delete this character?')) {
+                    const newList = { ...characterList };
+                    delete newList[id];
+                    setCharacterList(newList);
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(newList));
+                    
+                    // If deleting current character, switch to another or create new
+                    if (id === currentCharacterId) {
+                        const ids = Object.keys(newList);
+                        if (ids.length > 0) {
+                            switchToCharacter(ids[0]);
+                        } else {
+                            createNewCharacter();
+                        }
+                    }
+                }
+            };
+            
+            // Export all characters
+            const exportAllCharacters = () => {
+                const data = {
+                    version: '1.0',
+                    exportDate: new Date().toISOString(),
+                    characters: characterList
+                };
+                
+                const dataStr = JSON.stringify(data, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                const date = new Date().toISOString().split('T')[0];
+                link.download = `heroes-unbound-backup-${date}.json`;
+                link.click();
+                URL.revokeObjectURL(url);
+            };
+            
+            // Import characters
+            const importCharacters = () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            try {
+                                const imported = JSON.parse(event.target.result);
+                                
+                                // Check if it's a backup file with multiple characters
+                                if (imported.characters) {
+                                    const merged = { ...characterList, ...imported.characters };
+                                    setCharacterList(merged);
+                                    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+                                    alert(`Imported ${Object.keys(imported.characters).length} character(s) successfully!`);
+                                } 
+                                // Or a single character export
+                                else if (imported.heroName) {
+                                    const newId = generateId(imported.heroName);
+                                    const merged = { ...characterList, [newId]: imported };
+                                    setCharacterList(merged);
+                                    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+                                    setCurrentCharacterId(newId);
+                                    setCharacter(imported);
+                                    alert('Character imported successfully!');
+                                }
+                            } catch (error) {
+                                alert('Error importing file: ' + error.message);
+                            }
+                        };
+                        reader.readAsText(file);
+                    }
+                };
+                input.click();
+            };
+
+            // Helper function to parse dice notation (e.g., "3D" -> 3)
+            const parseDice = (diceStr) => {
+                if (!diceStr) return 0;
+                const match = diceStr.toString().match(/(\d+)D?/i);
+                return match ? parseInt(match[1]) : 0;
+            };
+
+            // Calculate totals
+            const calculateAptitudesTotal = () => {
+                const base = 2;
+                return (parseDice(character.might) - base) +
+                       (parseDice(character.dexterity) - base) +
+                       (parseDice(character.intellect) - base) +
+                       (parseDice(character.presence) - base);
+            };
+
+            const calculateResistancesTotal = () => {
+                const base = 2;
+                return (parseDice(character.fortitude) - base) +
+                       (parseDice(character.reaction) - base) +
+                       (parseDice(character.mind) - base) +
+                       (parseDice(character.composure) - base);
+            };
+
+            const calculateSpecializationsTotal = () => {
+                return character.specializations.reduce((sum, spec) => 
+                    sum + parseDice(spec.rating), 0);
+            };
+
+            const calculatePowersTotal = () => {
+                return character.powers.reduce((sum, power) => 
+                    sum + parseDice(power.allocation), 0);
+            };
+
+            const calculateSituationsTotal = () => {
+                return character.situations.reduce((sum, sit) => 
+                    sum + parseDice(sit.value), 0);
+            };
+
+            const calculateCreationPool = () => {
+                return calculateAptitudesTotal() +
+                       calculateResistancesTotal() +
+                       calculateSpecializationsTotal() +
+                       calculatePowersTotal();
+            };
+
+            const creationPool = calculateCreationPool();
+            const situationsTotal = calculateSituationsTotal();
+            const usedAdvancement = parseDice(character.usedAdvancement);
+            const unusedAdvancement = parseDice(character.unusedAdvancement);
+            const totalWithAdvancement = situationsTotal + usedAdvancement;
+            const isBalanced = creationPool === totalWithAdvancement;
+
+            // Handle portrait upload
+            const handlePortraitUpload = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        setCharacter({ ...character, portrait: reader.result });
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            // Update character field
+            const updateField = (field, value) => {
+                setCharacter({ ...character, [field]: value });
+            };
+
+            // Add item (specialization, power, or situation)
+            const addItem = (type) => {
+                const newItem = type === 'specialization' 
+                    ? { name: '', rating: '0D', description: '' }
+                    : type === 'power'
+                    ? { name: '', rating: '0D', allocation: '0D', description: '' }
+                    : { name: '', value: '0D', description: '' };
+                
+                const field = type === 'specialization' ? 'specializations' 
+                    : type === 'power' ? 'powers' 
+                    : 'situations';
+                
+                setCharacter({ 
+                    ...character, 
+                    [field]: [...character[field], newItem] 
+                });
+            };
+
+            // Update item
+            const updateItem = (type, index, field, value) => {
+                const arrayField = type === 'specialization' ? 'specializations' 
+                    : type === 'power' ? 'powers' 
+                    : 'situations';
+                
+                const newArray = [...character[arrayField]];
+                newArray[index] = { ...newArray[index], [field]: value };
+                setCharacter({ ...character, [arrayField]: newArray });
+            };
+
+            // Delete item
+            const deleteItem = (type, index) => {
+                const arrayField = type === 'specialization' ? 'specializations' 
+                    : type === 'power' ? 'powers' 
+                    : 'situations';
+                
+                const newArray = character[arrayField].filter((_, i) => i !== index);
+                setCharacter({ ...character, [arrayField]: newArray });
+            };
+            
+            // Reorder an item (move up or down)
+            const reorderItem = (type, index, direction) => {
+                const arrayField = type === 'specialization' ? 'specializations' 
+                    : type === 'power' ? 'powers' 
+                    : 'situations';
+                
+                const items = [...character[arrayField]];
+                const newIndex = direction === 'up' ? index - 1 : index + 1;
+                
+                // Check bounds
+                if (newIndex < 0 || newIndex >= items.length) return;
+                
+                // Swap items
+                [items[index], items[newIndex]] = [items[newIndex], items[index]];
+                
+                setCharacter({ ...character, [arrayField]: items });
+            };
+
+            // Save character to JSON file
+            // Export current character to JSON
+            const saveCharacter = () => {
+                const filename = character.heroName || 'character';
+                const dataStr = JSON.stringify(character, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `${filename}-heroes-unbound.json`;
+                link.click();
+                URL.revokeObjectURL(url);
+            };
+
+            // Export to printable HTML
+            const exportToHTML = () => {
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(generateCharacterSheetHTML());
+                printWindow.document.close();
+                setTimeout(() => {
+                    printWindow.print();
+                }, 250);
+            };
+
+            // Format description text: convert *text* to bold
+            const formatDescription = (text) => {
+                if (!text) return '';
+                
+                // Replace *text* with <strong>text</strong>
+                // Using a regex that finds text between asterisks
+                return text.replace(/\*([^*]+)\*/g, '<strong>$1</strong>');
+            };
+
+            // Generate character sheet HTML
+            const generateCharacterSheetHTML = () => {
+                return `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>${character.heroName || 'Character'} - Heroes Unbound</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 0.5in;
+            background: white;
+            font-size: 10px;
+        }
+        .character-sheet { max-width: 8.5in; margin: 0 auto; }
+        .sheet-header { 
+            display: grid; 
+            grid-template-columns: 0.9fr auto 0.9fr; 
+            gap: 15px; 
+            margin-bottom: 12px; 
+            align-items: start; 
+        }
+        .sheet-left-header-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            height: 100%;
+        }
+        .sheet-team-title-box {
+            border: 2px solid #2563eb;
+            border-radius: 8px;
+            padding: 10px;
+            background: #2563eb;
+        }
+        .sheet-team-title {
+            color: white;
+            font-style: italic;
+            font-weight: bold;
+            font-size: 14px;
+            text-align: center;
+            text-transform: uppercase;
+        }
+        .sheet-name-box { 
+            border: 2px solid black; 
+            border-radius: 8px; 
+            padding: 8px 10px; 
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            gap: 1px;
+        }
+        .sheet-hero-name { 
+            color: #dc2626; 
+            font-size: 24px; 
+            font-weight: bold; 
+            margin-bottom: 4px; 
+        }
+        .sheet-field-label { 
+            font-style: italic; 
+            font-weight: 600; 
+            font-size: 10px; 
+        }
+        .sheet-field-value { font-size: 10px; }
+        .sheet-portrait { 
+            width: 160px; 
+            height: 160px; 
+            border-radius: 50%; 
+            border: 4px solid #2563eb; 
+            background: #dbeafe; 
+            overflow: hidden; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sheet-portrait img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+        }
+        .sheet-right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            height: 100%;
+        }
+        .sheet-info-box { 
+            border: 2px solid #2563eb; 
+            border-radius: 8px; 
+            padding: 10px; 
+            background: #2563eb; 
+        }
+        .sheet-info-title { 
+            color: white; 
+            font-style: italic; 
+            font-weight: bold; 
+            font-size: 14px; 
+            text-align: center; 
+        }
+        .sheet-dice-box {
+            border: 2px solid black;
+            border-radius: 8px;
+            padding: 8px 10px;
+            background: white;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 3px;
+        }
+        .sheet-info-row { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            font-size: 10px;
+        }
+        .sheet-info-row.total {
+            font-weight: bold;
+            padding-top: 4px;
+            border-top: 1px solid #d1d5db;
+            margin-top: 2px;
+        }
+        .sheet-info-row:last-child { margin-bottom: 0; }
+        .sheet-section { 
+            border: 2px solid black; 
+            border-radius: 8px; 
+            padding: 10px; 
+            margin-bottom: 10px; 
+        }
+        .sheet-section-title { 
+            color: #2563eb; 
+            font-size: 15px; 
+            font-weight: 600; 
+            margin-bottom: 8px; 
+        }
+        .sheet-two-column { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 10px; 
+        }
+        .sheet-bottom-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            min-height: 500px;
+        }
+        .sheet-left-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .sheet-left-column .sheet-section:first-child {
+            min-height: 140px;
+            margin-bottom: 0;
+        }
+        .sheet-left-column .sheet-section:last-child {
+            min-height: 280px;
+            flex: 1;
+            margin-bottom: 0;
+        }
+        .sheet-bottom-layout > .sheet-section {
+            margin-bottom: 0;
+        }
+        .sheet-attribute-row { 
+            display: grid;
+            grid-template-columns: 85px 40px 1fr;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 6px; 
+            padding-bottom: 6px; 
+            border-bottom: 1px solid #e5e7eb; 
+        }
+        .sheet-attribute-row:last-child { 
+            border-bottom: none; 
+            margin-bottom: 0; 
+            padding-bottom: 0; 
+        }
+        .sheet-attribute-name { 
+            font-style: italic; 
+            font-weight: 600;
+            font-size: 10px;
+        }
+        .sheet-attribute-value { 
+            background: #f3f4f6; 
+            padding: 2px 6px; 
+            border-radius: 4px; 
+            border: 1px solid #d1d5db; 
+            font-weight: 600;
+            font-size: 10px;
+            text-align: center;
+        }
+        .sheet-attribute-notes {
+            font-size: 9px;
+            color: #6b7280;
+            font-style: italic;
+        }
+        .sheet-item { 
+            margin-bottom: 8px; 
+            padding-bottom: 8px; 
+            border-bottom: 1px solid #e5e7eb; 
+        }
+        .sheet-item:last-child { 
+            border-bottom: none; 
+            margin-bottom: 0; 
+            padding-bottom: 0; 
+        }
+        .sheet-item-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 3px; 
+        }
+        .sheet-item-name { 
+            font-weight: 600; 
+            color: #1f2937;
+            font-size: 10px;
+        }
+        .sheet-item-name strong {
+            font-weight: 700;
+        }
+        .sheet-item-desc { 
+            font-size: 9px; 
+            color: #6b7280; 
+            font-style: italic; 
+            white-space: pre-wrap;
+        }
+        .sheet-anchoring-text {
+            font-size: 10px;
+            line-height: 1.4;
+            margin-bottom: 4px;
+        }
+        @media print {
+            @page { size: letter; margin: 0.5in; }
+            body { padding: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="character-sheet">
+        <div class="sheet-header">
+            <div class="sheet-left-header-group">
+                <div class="sheet-team-title-box">
+                    <div class="sheet-team-title">${character.teamTitle || 'TEAM TITLE'}</div>
+                </div>
+                <div class="sheet-name-box">
+                    <div class="sheet-hero-name">${character.heroName || 'HERO NAME'}</div>
+                    <div><span class="sheet-field-label">REAL NAME</span> <span class="sheet-field-value">${character.realName || ''}</span></div>
+                    <div><span class="sheet-field-label">OCCUPATION</span> <span class="sheet-field-value">${character.occupation || ''}</span></div>
+                    <div><span class="sheet-field-label">BASE OF OPERATIONS</span> <span class="sheet-field-value">${character.baseOfOperations || ''}</span></div>
+                    <div><span class="sheet-field-label">ISSUE NO.</span> <span class="sheet-field-value">${character.issueNo || ''}</span></div>
+                </div>
+            </div>
+            <div class="sheet-portrait">
+                ${character.portrait ? `<img src="${character.portrait}" alt="Portrait" />` : ''}
+            </div>
+            <div class="sheet-right-column">
+                <div class="sheet-info-box">
+                    <div class="sheet-info-title">HEROES UNBOUND</div>
+                </div>
+                <div class="sheet-dice-box">
+                    <div class="sheet-info-row">
+                        <span class="sheet-field-label">Situations</span>
+                        <span>${situationsTotal}D</span>
+                    </div>
+                    <div class="sheet-info-row">
+                        <span class="sheet-field-label">Used Advancement</span>
+                        <span>${usedAdvancement}D</span>
+                    </div>
+                    <div class="sheet-info-row">
+                        <span class="sheet-field-label">Unused Advancement</span>
+                        <span>${unusedAdvancement}D</span>
+                    </div>
+                    <div class="sheet-info-row total">
+                        <span class="sheet-field-label">CREATION DICE POOL</span>
+                        <strong>${situationsTotal + usedAdvancement + unusedAdvancement}D</strong>
+                    </div>
+                    <div class="sheet-info-row" style="margin-top: 5px; padding-top: 5px; border-top: 1px solid #e5e7eb;">
+                        <span class="sheet-field-label">Creation Pool Allocation</span>
+                        <strong>${creationPool}D</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sheet-section">
+            <div class="sheet-section-title">Anchoring Statements</div>
+            ${character.anchoringStatements.filter(s => s).map((stmt, i) => 
+                `<div class="sheet-anchoring-text">${i + 1}) ${stmt}</div>`
+            ).join('')}
+        </div>
+
+        <div class="sheet-two-column">
+            <div class="sheet-section">
+                <div class="sheet-section-title">Aptitudes</div>
+                <div class="sheet-attribute-row">
+                    <span class="sheet-attribute-name">MIGHT</span>
+                    <span class="sheet-attribute-value">${character.might}</span>
+                    <span class="sheet-attribute-notes">${character.mightNotes || ''}</span>
+                </div>
+                <div class="sheet-attribute-row">
+                    <span class="sheet-attribute-name">DEXTERITY</span>
+                    <span class="sheet-attribute-value">${character.dexterity}</span>
+                    <span class="sheet-attribute-notes">${character.dexterityNotes || ''}</span>
+                </div>
+                <div class="sheet-attribute-row">
+                    <span class="sheet-attribute-name">INTELLECT</span>
+                    <span class="sheet-attribute-value">${character.intellect}</span>
+                    <span class="sheet-attribute-notes">${character.intellectNotes || ''}</span>
+                </div>
+                <div class="sheet-attribute-row">
+                    <span class="sheet-attribute-name">PRESENCE</span>
+                    <span class="sheet-attribute-value">${character.presence}</span>
+                    <span class="sheet-attribute-notes">${character.presenceNotes || ''}</span>
+                </div>
+            </div>
+
+            <div class="sheet-section">
+                <div class="sheet-section-title">Resistances</div>
+                <div class="sheet-attribute-row">
+                    <span class="sheet-attribute-name">FORTITUDE</span>
+                    <span class="sheet-attribute-value">${character.fortitude}</span>
+                    <span class="sheet-attribute-notes">${character.fortitudeNotes || ''}</span>
+                </div>
+                <div class="sheet-attribute-row">
+                    <span class="sheet-attribute-name">REACTION</span>
+                    <span class="sheet-attribute-value">${character.reaction}</span>
+                    <span class="sheet-attribute-notes">${character.reactionNotes || ''}</span>
+                </div>
+                <div class="sheet-attribute-row">
+                    <span class="sheet-attribute-name">MIND</span>
+                    <span class="sheet-attribute-value">${character.mind}</span>
+                    <span class="sheet-attribute-notes">${character.mindNotes || ''}</span>
+                </div>
+                <div class="sheet-attribute-row">
+                    <span class="sheet-attribute-name">COMPOSURE</span>
+                    <span class="sheet-attribute-value">${character.composure}</span>
+                    <span class="sheet-attribute-notes">${character.composureNotes || ''}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="sheet-bottom-layout">
+            <div class="sheet-left-column">
+                <div class="sheet-section">
+                    <div class="sheet-section-title">Specializations</div>
+                    ${character.specializations.map(spec => {
+                        // Format specialization name: convert *text* to bold
+                        const formattedName = formatDescription(spec.name);
+                        
+                        return `
+                        <div class="sheet-item">
+                            <div class="sheet-item-header">
+                                <span class="sheet-item-name">${formattedName}</span>
+                                <span class="sheet-attribute-value">${spec.rating}</span>
+                            </div>
+                            ${spec.description ? `<div class="sheet-item-desc" style="color: #6b7280;">${formatDescription(spec.description)}</div>` : ''}
+                        </div>
+                    `}).join('') || '<div style="color: #9ca3af; font-style: italic; font-size: 9px;">No specializations</div>'}
+                </div>
+
+                <div class="sheet-section">
+                    <div class="sheet-section-title">Powers and Resources</div>
+                    ${character.powers.map(power => {
+                        // Format power name: convert *text* to bold
+                        const formattedName = formatDescription(power.name);
+                        
+                        return `
+                        <div class="sheet-item">
+                            <div class="sheet-item-header">
+                                <span class="sheet-item-name">${formattedName}</span>
+                                <span class="sheet-attribute-value">${power.rating}</span>
+                            </div>
+                            ${power.description ? `<div class="sheet-item-desc" style="color: #6b7280;">${formatDescription(power.description)}</div>` : ''}
+                        </div>
+                    `}).join('') || '<div style="color: #9ca3af; font-style: italic; font-size: 9px;">No powers</div>'}
+                </div>
+            </div>
+
+            <div class="sheet-section">
+                <div class="sheet-section-title">Situations</div>
+                ${character.situations.map(sit => {
+                    // Format situation name: convert *text* to bold
+                    const formattedName = formatDescription(sit.name);
+                    
+                    return `
+                    <div class="sheet-item">
+                        <div class="sheet-item-header">
+                            <span class="sheet-item-name">${formattedName}</span>
+                            <span class="sheet-attribute-value">${sit.value}</span>
+                        </div>
+                        ${sit.description ? `<div class="sheet-item-desc" style="color: #6b7280;">${formatDescription(sit.description)}</div>` : ''}
+                    </div>
+                `}).join('') || '<div style="color: #9ca3af; font-style: italic; font-size: 9px;">No situations</div>'}
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+                `;
+            };
+
+            // Export to PDF
+            const exportToPDF = async () => {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'in', 'letter');
+                
+                // Create a temporary div with the character sheet
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = generateCharacterSheetHTML();
+                tempDiv.style.position = 'absolute';
+                tempDiv.style.left = '-9999px';
+                tempDiv.style.width = '8.5in';
+                document.body.appendChild(tempDiv);
+                
+                try {
+                    const canvas = await html2canvas(tempDiv.querySelector('.character-sheet'), {
+                        scale: 2,
+                        useCORS: true,
+                        logging: false
+                    });
+                    
+                    const imgData = canvas.toDataURL('image/png');
+                    const imgWidth = 8.5;
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                    
+                    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                    pdf.save(`${character.heroName || 'character'}-heroes-unbound.pdf`);
+                } catch (error) {
+                    alert('Error generating PDF. Please try exporting to HTML instead.');
+                    console.error(error);
+                } finally {
+                    document.body.removeChild(tempDiv);
+                }
+            };
+
+            return (
+                <>
+                    {/* Character Switcher Modal */}
+                    {showCharacterSwitcher && (
+                        <div className="modal-overlay" onClick={() => {
+                            setShowCharacterSwitcher(false);
+                            setVisibleCount(20);
+                            setSearchTerm('');
+                        }}>
+                            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                                <div className="modal-header">
+                                    <h2 className="modal-title">My Characters</h2>
+                                    <button className="modal-close" onClick={() => {
+                                        setShowCharacterSwitcher(false);
+                                        setVisibleCount(20);
+                                        setSearchTerm('');
+                                    }}>
+                                        ×
+                                    </button>
+                                </div>
+                                
+                                <input
+                                    type="text"
+                                    className="search-box"
+                                    placeholder="Search characters..."
+                                    value={searchTerm}
+                                    onChange={(e) => {
+                                        setSearchTerm(e.target.value);
+                                        setVisibleCount(20); // Reset pagination when searching
+                                    }}
+                                />
+                                
+                                {Object.keys(characterList).length > 0 && (
+                                    <div className="character-count">
+                                        {(() => {
+                                            const filtered = Object.entries(characterList)
+                                                .filter(([id, char]) => 
+                                                    char.heroName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                                    (char.realName && char.realName.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                );
+                                            const total = Object.keys(characterList).length;
+                                            if (searchTerm) {
+                                                return `Found ${filtered.length} of ${total} character${total !== 1 ? 's' : ''}`;
+                                            }
+                                            return `${total} character${total !== 1 ? 's' : ''}`;
+                                        })()}
+                                    </div>
+                                )}
+                                
+                                <div className="character-list">
+                                    {Object.keys(characterList).length === 0 ? (
+                                        <div className="empty-state">
+                                            <div className="empty-state-icon">📝</div>
+                                            <p>No characters yet. Create your first hero!</p>
+                                        </div>
+                                    ) : (
+                                        (() => {
+                                            const filtered = Object.entries(characterList)
+                                                .filter(([id, char]) => 
+                                                    char.heroName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                                    (char.realName && char.realName.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                );
+                                            const visible = filtered.slice(0, visibleCount);
+                                            const hasMore = filtered.length > visibleCount;
+                                            
+                                            return (
+                                                <>
+                                                    {visible.map(([id, char]) => (
+                                                        <div 
+                                                            key={id}
+                                                            className={`character-list-item ${id === currentCharacterId ? 'active' : ''}`}
+                                                            onClick={() => switchToCharacter(id)}
+                                                        >
+                                                            <div>
+                                                                <div className="character-name">
+                                                                    {char.heroName || 'Unnamed Character'}
+                                                                </div>
+                                                                {char.realName && (
+                                                                    <div className="character-info">{char.realName}</div>
+                                                                )}
+                                                            </div>
+                                                            <button
+                                                                className="delete-character-btn"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    deleteCharacter(id);
+                                                                }}
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                    {hasMore && (
+                                                        <button 
+                                                            className="load-more-btn"
+                                                            onClick={() => setVisibleCount(visibleCount + 20)}
+                                                        >
+                                                            Load More ({filtered.length - visibleCount} remaining)
+                                                        </button>
+                                                    )}
+                                                </>
+                                            );
+                                        })()
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                
+                    <div className="container">
+                        {/* Current Character Bar */}
+                        <div className="current-character-bar">
+                            <div className="current-character-info">
+                                <div className="current-character-label">Currently Editing</div>
+                                <div className="current-character-name">
+                                    {character.heroName || 'New Character'}
+                                </div>
+                                {lastSaved && (
+                                    <div className="auto-save-indicator">
+                                        ✓ Saved {Math.floor((new Date() - lastSaved) / 1000)}s ago
+                                    </div>
+                                )}
+                            </div>
+                            <div className="character-actions">
+                                <button className="btn-secondary" onClick={() => setShowCharacterSwitcher(true)}>
+                                    Switch Character
+                                </button>
+                                <button className="btn-secondary" onClick={createNewCharacter}>
+                                    + New
+                                </button>
+                            </div>
+                        </div>
+                    
+                        <h1>Heroes Unbound Character Generator</h1>
+                        <p className="subtitle">Create your superhero character for Heroes Unbound</p>
+
+                    {/* Basic Information */}
+                    <div className="section">
+                        <h2 className="section-title">BASIC INFORMATION</h2>
+                        <div className="basic-info-layout">
+                            <div className="basic-info-fields">
+                                {/* Row 1 */}
+                                <div className="form-group">
+                                    <label>Hero Name *</label>
+                                    <input 
+                                        type="text" 
+                                        value={character.heroName}
+                                        onChange={(e) => updateField('heroName', e.target.value)}
+                                        placeholder="e.g., Silver Specter"
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Real Name</label>
+                                    <input 
+                                        type="text" 
+                                        value={character.realName}
+                                        onChange={(e) => updateField('realName', e.target.value)}
+                                        placeholder="e.g., Helena Geller"
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Occupation</label>
+                                    <input 
+                                        type="text" 
+                                        value={character.occupation}
+                                        onChange={(e) => updateField('occupation', e.target.value)}
+                                        placeholder="e.g., Reporter"
+                                    />
+                                </div>
+                                
+                                {/* Row 2 */}
+                                <div className="form-group">
+                                    <label>Team Title (Comic Book Title)</label>
+                                    <input 
+                                        type="text" 
+                                        value={character.teamTitle}
+                                        onChange={(e) => updateField('teamTitle', e.target.value)}
+                                        placeholder="e.g., Sentinels of Justice"
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Issue No.</label>
+                                    <input 
+                                        type="text" 
+                                        value={character.issueNo}
+                                        onChange={(e) => updateField('issueNo', e.target.value)}
+                                        placeholder="e.g., Issue #1"
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Base of Operations</label>
+                                    <input 
+                                        type="text" 
+                                        value={character.baseOfOperations}
+                                        onChange={(e) => updateField('baseOfOperations', e.target.value)}
+                                        placeholder="e.g., New York City"
+                                    />
+                                </div>
+                                
+                                {/* Row 3 */}
+                                <div className="form-group">
+                                    <label>Used Advancement</label>
+                                    <input 
+                                        type="text" 
+                                        value={character.usedAdvancement}
+                                        onChange={(e) => updateField('usedAdvancement', e.target.value)}
+                                        placeholder="e.g., 0D"
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Unused Advancement</label>
+                                    <input 
+                                        type="text" 
+                                        value={character.unusedAdvancement}
+                                        onChange={(e) => updateField('unusedAdvancement', e.target.value)}
+                                        placeholder="e.g., 0D"
+                                    />
+                                </div>
+                                <div></div>
+                            </div>
+                            
+                            {/* Portrait on right side */}
+                            <div className="portrait-section" onClick={() => fileInputRef.current?.click()}>
+                                <div className="portrait-preview">
+                                    {character.portrait ? (
+                                        <img src={character.portrait} alt="Portrait" />
+                                    ) : (
+                                        <div className="portrait-placeholder">No image</div>
+                                    )}
+                                </div>
+                                <div className="upload-overlay">
+                                    {character.portrait ? 'Change Portrait' : 'Upload Portrait'}
+                                </div>
+                                <input 
+                                    ref={fileInputRef}
+                                    type="file" 
+                                    accept="image/*"
+                                    onChange={handlePortraitUpload}
+                                    style={{display: 'none'}}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Anchoring Statements */}
+                    <div className="section">
+                        <h2 className="section-title">ANCHORING STATEMENTS</h2>
+                        <div className="horizontal-field">
+                            <label>Statement 1:</label>
+                            <textarea 
+                                value={character.anchoringStatements[0]}
+                                onChange={(e) => {
+                                    const newStatements = [...character.anchoringStatements];
+                                    newStatements[0] = e.target.value;
+                                    updateField('anchoringStatements', newStatements);
+                                }}
+                                placeholder="e.g., Weird powers, wondrous technology, and two-fisted justice blaze in the shadows."
+                                rows="2"
+                            />
+                        </div>
+                        <div className="horizontal-field">
+                            <label>Statement 2:</label>
+                            <textarea 
+                                value={character.anchoringStatements[1]}
+                                onChange={(e) => {
+                                    const newStatements = [...character.anchoringStatements];
+                                    newStatements[1] = e.target.value;
+                                    updateField('anchoringStatements', newStatements);
+                                }}
+                                placeholder="e.g., Fighting Supremacy and Depression in late-1930s New York City."
+                                rows="2"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Aptitudes and Resistances Side by Side */}
+                    <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
+                        {/* Aptitudes */}
+                        <div className="section">
+                            <h2 className="section-title">APTITUDES ({calculateAptitudesTotal()}D)</h2>
+                            <div style={{fontSize: '11px', color: '#6b7280', marginBottom: '10px', fontStyle: 'italic'}}>
+                                Start at 2D, Max 5D
+                            </div>
+                            <div className="attribute-row">
+                                <span className="attribute-label">MIGHT</span>
+                                <input 
+                                    type="text" 
+                                    value={character.might}
+                                    onChange={(e) => updateField('might', e.target.value)}
+                                    placeholder="2D"
+                                    style={{width: '60px'}}
+                                />
+                                <input 
+                                    type="text" 
+                                    value={character.mightNotes}
+                                    onChange={(e) => updateField('mightNotes', e.target.value)}
+                                    placeholder="Use *asterisks* for bold"
+                                    style={{flex: 1}}
+                                />
+                            </div>
+                            <div className="attribute-row">
+                                <span className="attribute-label">DEXTERITY</span>
+                                <input 
+                                    type="text" 
+                                    value={character.dexterity}
+                                    onChange={(e) => updateField('dexterity', e.target.value)}
+                                    placeholder="2D"
+                                    style={{width: '60px'}}
+                                />
+                                <input 
+                                    type="text" 
+                                    value={character.dexterityNotes}
+                                    onChange={(e) => updateField('dexterityNotes', e.target.value)}
+                                    placeholder="Use *asterisks* for bold"
+                                    style={{flex: 1}}
+                                />
+                            </div>
+                            <div className="attribute-row">
+                                <span className="attribute-label">INTELLECT</span>
+                                <input 
+                                    type="text" 
+                                    value={character.intellect}
+                                    onChange={(e) => updateField('intellect', e.target.value)}
+                                    placeholder="2D"
+                                    style={{width: '60px'}}
+                                />
+                                <input 
+                                    type="text" 
+                                    value={character.intellectNotes}
+                                    onChange={(e) => updateField('intellectNotes', e.target.value)}
+                                    placeholder="Use *asterisks* for bold"
+                                    style={{flex: 1}}
+                                />
+                            </div>
+                            <div className="attribute-row">
+                                <span className="attribute-label">PRESENCE</span>
+                                <input 
+                                    type="text" 
+                                    value={character.presence}
+                                    onChange={(e) => updateField('presence', e.target.value)}
+                                    placeholder="2D"
+                                    style={{width: '60px'}}
+                                />
+                                <input 
+                                    type="text" 
+                                    value={character.presenceNotes}
+                                    onChange={(e) => updateField('presenceNotes', e.target.value)}
+                                    placeholder="Use *asterisks* for bold"
+                                    style={{flex: 1}}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Resistances */}
+                        <div className="section">
+                            <h2 className="section-title">RESISTANCES ({calculateResistancesTotal()}D)</h2>
+                            <div style={{fontSize: '11px', color: '#6b7280', marginBottom: '10px', fontStyle: 'italic'}}>
+                                Start at 2D, Max 5D
+                            </div>
+                            <div className="attribute-row">
+                                <span className="attribute-label">FORTITUDE</span>
+                                <input 
+                                    type="text" 
+                                    value={character.fortitude}
+                                    onChange={(e) => updateField('fortitude', e.target.value)}
+                                    placeholder="2D"
+                                    style={{width: '60px'}}
+                                />
+                                <input 
+                                    type="text" 
+                                    value={character.fortitudeNotes}
+                                    onChange={(e) => updateField('fortitudeNotes', e.target.value)}
+                                    placeholder="Use *asterisks* for bold"
+                                    style={{flex: 1}}
+                                />
+                            </div>
+                            <div className="attribute-row">
+                                <span className="attribute-label">REACTION</span>
+                                <input 
+                                    type="text" 
+                                    value={character.reaction}
+                                    onChange={(e) => updateField('reaction', e.target.value)}
+                                    placeholder="2D"
+                                    style={{width: '60px'}}
+                                />
+                                <input 
+                                    type="text" 
+                                    value={character.reactionNotes}
+                                    onChange={(e) => updateField('reactionNotes', e.target.value)}
+                                    placeholder="Use *asterisks* for bold"
+                                    style={{flex: 1}}
+                                />
+                            </div>
+                            <div className="attribute-row">
+                                <span className="attribute-label">MIND</span>
+                                <input 
+                                    type="text" 
+                                    value={character.mind}
+                                    onChange={(e) => updateField('mind', e.target.value)}
+                                    placeholder="2D"
+                                    style={{width: '60px'}}
+                                />
+                                <input 
+                                    type="text" 
+                                    value={character.mindNotes}
+                                    onChange={(e) => updateField('mindNotes', e.target.value)}
+                                    placeholder="Use *asterisks* for bold"
+                                    style={{flex: 1}}
+                                />
+                            </div>
+                            <div className="attribute-row">
+                                <span className="attribute-label">COMPOSURE</span>
+                                <input 
+                                    type="text" 
+                                    value={character.composure}
+                                    onChange={(e) => updateField('composure', e.target.value)}
+                                    placeholder="2D"
+                                    style={{width: '60px'}}
+                                />
+                                <input 
+                                    type="text" 
+                                    value={character.composureNotes}
+                                    onChange={(e) => updateField('composureNotes', e.target.value)}
+                                    placeholder="Use *asterisks* for bold"
+                                    style={{flex: 1}}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Specializations */}
+                    <div className="section">
+                        <div className="section-header-with-add">
+                            <h2 className="section-title">SPECIALIZATIONS ({calculateSpecializationsTotal()}D)</h2>
+                            <button className="add-btn-inline" onClick={() => addItem('specialization')}>+</button>
+                        </div>
+                        {character.specializations.map((spec, index) => (
+                            <div key={index} className="specialization-item-wrapper">
+                                <div className="inline-item">
+                                    <div className="reorder-buttons">
+                                        <button 
+                                            className="btn-reorder" 
+                                            onClick={() => reorderItem('specialization', index, 'up')}
+                                            disabled={index === 0}
+                                            title="Move up"
+                                        >
+                                            ▲
+                                        </button>
+                                        <button 
+                                            className="btn-reorder" 
+                                            onClick={() => reorderItem('specialization', index, 'down')}
+                                            disabled={index === character.specializations.length - 1}
+                                            title="Move down"
+                                        >
+                                            ▼
+                                        </button>
+                                    </div>
+                                    <input 
+                                        type="text" 
+                                        value={spec.name}
+                                        onChange={(e) => updateItem('specialization', index, 'name', e.target.value)}
+                                        placeholder="Specialization name"
+                                    />
+                                    <input 
+                                        type="text" 
+                                        className="rating-input"
+                                        value={spec.rating}
+                                        onChange={(e) => updateItem('specialization', index, 'rating', e.target.value)}
+                                        placeholder="0D"
+                                    />
+                                    <button className="btn-delete-inline" onClick={() => deleteItem('specialization', index)}>
+                                        Delete
+                                    </button>
+                                </div>
+                                <div className="inline-item-desc">
+                                    <textarea 
+                                        value={spec.description}
+                                        onChange={(e) => updateItem('specialization', index, 'description', e.target.value)}
+                                        placeholder="Use *asterisks* for bold."
+                                        rows="2"
+                                        style={{width: '100%'}}
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Powers and Resources */}
+                    <div className="section">
+                        <div className="section-header-with-add">
+                            <h2 className="section-title">POWERS ({calculatePowersTotal()}D)</h2>
+                            <button className="add-btn-inline" onClick={() => addItem('power')}>+</button>
+                        </div>
+                        {character.powers.map((power, index) => (
+                            <div key={index} className="power-item-wrapper">
+                                <div className="inline-item">
+                                    <div className="reorder-buttons">
+                                        <button 
+                                            className="btn-reorder" 
+                                            onClick={() => reorderItem('power', index, 'up')}
+                                            disabled={index === 0}
+                                            title="Move up"
+                                        >
+                                            ▲
+                                        </button>
+                                        <button 
+                                            className="btn-reorder" 
+                                            onClick={() => reorderItem('power', index, 'down')}
+                                            disabled={index === character.powers.length - 1}
+                                            title="Move down"
+                                        >
+                                            ▼
+                                        </button>
+                                    </div>
+                                    <div className="input-with-label name-field">
+                                        <label className="input-label-small">Power</label>
+                                        <input 
+                                            type="text" 
+                                            value={power.name}
+                                            onChange={(e) => updateItem('power', index, 'name', e.target.value)}
+                                            placeholder="Power name (e.g., *Time Control* (Unified Power))"
+                                        />
+                                    </div>
+                                    <div className="input-with-label">
+                                        <label className="input-label-small">Rating</label>
+                                        <input 
+                                            type="text" 
+                                            className="rating-input"
+                                            value={power.rating}
+                                            onChange={(e) => updateItem('power', index, 'rating', e.target.value)}
+                                            placeholder="0D"
+                                        />
+                                    </div>
+                                    <div className="input-with-label">
+                                        <label className="input-label-small">Allocation</label>
+                                        <input 
+                                            type="text" 
+                                            className="rating-input"
+                                            value={power.allocation}
+                                            onChange={(e) => updateItem('power', index, 'allocation', e.target.value)}
+                                            placeholder="0D"
+                                        />
+                                    </div>
+                                    <button className="btn-delete-inline" onClick={() => deleteItem('power', index)}>
+                                        Delete
+                                    </button>
+                                </div>
+                                <div className="inline-item-desc">
+                                    <textarea 
+                                        value={power.description}
+                                        onChange={(e) => updateItem('power', index, 'description', e.target.value)}
+                                        placeholder="Use *asterisks* for bold."
+                                        rows="3"
+                                        style={{width: '100%'}}
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Situations */}
+                    <div className="section">
+                        <div className="section-header-with-add">
+                            <h2 className="section-title">SITUATIONS ({calculateSituationsTotal()}D)</h2>
+                            <button className="add-btn-inline" onClick={() => addItem('situation')}>+</button>
+                        </div>
+                        {character.situations.map((sit, index) => (
+                            <div key={index} className="situation-item-wrapper">
+                                <div className="inline-item">
+                                    <div className="reorder-buttons">
+                                        <button 
+                                            className="btn-reorder" 
+                                            onClick={() => reorderItem('situation', index, 'up')}
+                                            disabled={index === 0}
+                                            title="Move up"
+                                        >
+                                            ▲
+                                        </button>
+                                        <button 
+                                            className="btn-reorder" 
+                                            onClick={() => reorderItem('situation', index, 'down')}
+                                            disabled={index === character.situations.length - 1}
+                                            title="Move down"
+                                        >
+                                            ▼
+                                        </button>
+                                    </div>
+                                    <input 
+                                        type="text" 
+                                        value={sit.name}
+                                        onChange={(e) => updateItem('situation', index, 'name', e.target.value)}
+                                        placeholder="Situation (e.g., *Helena Geller* (Secret Identity))"
+                                    />
+                                    <input 
+                                        type="text" 
+                                        className="rating-input"
+                                        value={sit.value}
+                                        onChange={(e) => updateItem('situation', index, 'value', e.target.value)}
+                                        placeholder="Value"
+                                    />
+                                    <button className="btn-delete-inline" onClick={() => deleteItem('situation', index)}>
+                                        Delete
+                                    </button>
+                                </div>
+                                <div className="inline-item-desc">
+                                    <textarea 
+                                        value={sit.description}
+                                        onChange={(e) => updateItem('situation', index, 'description', e.target.value)}
+                                        placeholder="Use *asterisks* for bold."
+                                        rows="3"
+                                        style={{width: '100%'}}
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Validation Warning/Success */}
+                    {!isBalanced ? (
+                        <div className="validation-warning">
+                            ⚠️ Character is not balanced: Creation Pool ({creationPool}D) should equal Situations ({situationsTotal}D) + Used Advancement ({usedAdvancement}D) = {totalWithAdvancement}D
+                        </div>
+                    ) : (
+                        <div className="validation-success">
+                            ✓ Character is balanced! Creation Pool: {creationPool}D = Situations: {situationsTotal}D + Used Advancement: {usedAdvancement}D
+                        </div>
+                    )}
+
+                    {/* Export Buttons */}
+                    <div className="export-buttons">
+                        <button className="btn-secondary" onClick={exportAllCharacters}>
+                            💾 Export All Characters
+                        </button>
+                        <button className="btn-secondary" onClick={importCharacters}>
+                            📥 Import Characters
+                        </button>
+                        <button className="btn-secondary" onClick={saveCharacter}>
+                            📤 Export Current to JSON
+                        </button>
+                        <button className="btn-success" onClick={exportToHTML}>
+                            📄 Export to Printable HTML
+                        </button>
+                        <button className="btn-success" onClick={exportToPDF}>
+                            📑 Export to PDF
+                        </button>
+                    </div>
+                </div>
+                </>
+            );
+        }
+
+        ReactDOM.render(<HeroesUnboundGenerator />, document.getElementById('root'));
+    </script>
+</body>
+</html>
